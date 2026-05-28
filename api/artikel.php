@@ -30,7 +30,7 @@ if ($method === 'GET') {
     
     $list_artikel = [];
     while ($row = $result->fetch_assoc()) {
-        $row['gambar_url'] = "http://" . $_SERVER['HTTP_HOST'] . "/blog-api/uploads/" . $row['gambar'];
+        $row['gambar_url'] = "http://" . $_SERVER['HTTP_HOST'] . "/apiblog/uploads/" . $row['gambar'];
         $list_artikel[] = $row;
     }
     

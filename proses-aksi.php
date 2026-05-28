@@ -1,10 +1,43 @@
 <?php
+// TIGA BARIS INI WAJIB UNTUK MENGIZINKAN LIVE SERVER (PORT 5500) MENGAKSES API LARAGON
+header("Access-Control-Allow-Origin: *");
+header("Access-Control-Allow-Methods: GET, POST, OPTIONS");
+header("Access-Control-Allow-Headers: Content-Type, Authorization");
+
 require_once 'config.php';
 
 // Atur header agar merespons dalam format JSON
 header('Content-Type: application/json; charset=UTF-8');
 
-// Proteksi Keamanan: Pastikan sesi admin sudah login aktif
+// Tangkap parameter aksi dari URL query string (misal: proses-aksi.php?aksi=simpan)
+$aksi = $_GET['aksi'] ?? '';
+
+// =========================================================================
+// API PUBLIK (FRONTEND) - Harus diletakkan SEBELUM proteksi sesi admin
+// =========================================================================
+if ($aksi === 'get_semua_artikel') {
+    $query = "SELECT artikel.*, kategori.nama_kategori 
+              FROM artikel 
+              LEFT JOIN kategori ON artikel.id_kategori = kategori.id 
+              ORDER BY artikel.id DESC";
+    
+    $result = $koneksi->query($query);
+    $data = [];
+    
+    if ($result && $result->num_rows > 0) {
+        while($row = $result->fetch_assoc()) {
+            $data[] = $row;
+        }
+    }
+    
+    echo json_encode($data);
+    exit; // Berhenti di sini agar pengunjung biasa tidak mengeksekusi kode admin
+}
+
+
+// =========================================================================
+// PROTEKSI KEAMANAN ADMIN - Mulai dari sini ke bawah, WAJIB LOGIN!
+// =========================================================================
 if (!isset($_SESSION['admin_logged_in']) || $_SESSION['admin_logged_in'] !== true) {
     http_response_code(419);
     echo json_encode([
@@ -13,9 +46,6 @@ if (!isset($_SESSION['admin_logged_in']) || $_SESSION['admin_logged_in'] !== tru
     ]);
     exit;
 }
-
-// Tangkap parameter aksi dari URL query string (misal: proses-aksi.php?aksi=simpan)
-$aksi = $_GET['aksi'] ?? '';
 
 // =========================================================================
 // 1. AMBIL DETAIL DATA (Untuk dilempar ke field form Modal Edit)
@@ -93,7 +123,7 @@ if ($aksi === 'simpan') {
             exit;
         }
 
-        // Validasi Ukuran Berkas Maksimal 3 Megabyte (3 * 1024 * 1024)
+        // Validasi Ukuran Berkas Maksimal 3 Megabyte
         if ($ukuran_file > 3145728) {
             echo json_encode([
                 'status' => false, 
@@ -102,12 +132,11 @@ if ($aksi === 'simpan') {
             exit;
         }
 
-        // Generate nama berkas acak unik baru agar tidak terjadi bentrok nama file di folder uploads
+        // Generate nama berkas acak unik baru
         $nama_file_baru = uniqid('img_', true) . '.' . $ekstensi_file;
         
-        // Eksekusi pemindahan file dari temporer komputer ke direktori proyek Laragon
         if (move_uploaded_file($tmp_file, 'uploads/' . $nama_file_baru)) {
-            // Hapus gambar lama dari penyimpanan server jika ini adalah aksi Update data
+            // Hapus gambar lama dari server jika ini aksi Update
             if (!empty($gambar_lama) && file_exists('uploads/' . $gambar_lama)) {
                 unlink('uploads/' . $gambar_lama);
             }
@@ -122,7 +151,6 @@ if ($aksi === 'simpan') {
 
     // --- Eksekusi Query Database ---
     if (empty($id)) {
-        // PROSES: TAMBAH DATA BARU (INSERT)
         if (empty($nama_file_baru)) {
             echo json_encode([
                 'status' => false, 
@@ -135,22 +163,15 @@ if ($aksi === 'simpan') {
         $stmt->bind_param("issss", $id_kategori, $judul, $isi, $nama_file_baru, $pemosting);
         $pesan_sukses = 'Artikel baru Anda berhasil dipublikasikan!';
     } else {
-        // PROSES: PERBARUI DATA LAMA (UPDATE)
         $stmt = $koneksi->prepare("UPDATE artikel SET id_kategori = ?, judul = ?, isi = ?, gambar = ? WHERE id = ?");
         $stmt->bind_param("isssi", $id_kategori, $judul, $isi, $nama_file_baru, $id);
         $pesan_sukses = 'Perubahan data artikel berhasil diperbarui!';
     }
 
     if ($stmt->execute()) {
-        echo json_encode([
-            'status' => true, 
-            'message' => $pesan_sukses
-        ]);
+        echo json_encode(['status' => true, 'message' => $pesan_sukses]);
     } else {
-        echo json_encode([
-            'status' => false, 
-            'message' => 'Sistem gagal menyimpan perubahan data ke database.'
-        ]);
+        echo json_encode(['status' => false, 'message' => 'Sistem gagal menyimpan perubahan data ke database.']);
     }
     exit;
 }
@@ -166,7 +187,6 @@ if ($aksi === 'hapus') {
         exit;
     }
 
-    // Cari tahu nama file gambarnya terlebih dahulu agar bisa dihapus dari storage
     $stmt_cari = $koneksi->prepare("SELECT gambar FROM artikel WHERE id = ?");
     $stmt_cari->bind_param("i", $id);
     $stmt_cari->execute();
@@ -175,31 +195,20 @@ if ($aksi === 'hapus') {
     if ($row_artikel) {
         $nama_gambar = $row_artikel['gambar'];
         
-        // Hapus file fisik gambar dari dalam folder uploads lokal Laragon jika filenya ada
         if (!empty($nama_gambar) && file_exists('uploads/' . $nama_gambar)) {
             unlink('uploads/' . $nama_gambar);
         }
 
-        // Hapus record row data dari tabel database
         $stmt_hapus = $koneksi->prepare("DELETE FROM artikel WHERE id = ?");
         $stmt_hapus->bind_param("i", $id);
         
         if ($stmt_hapus->execute()) {
-            echo json_encode([
-                'status' => true, 
-                'message' => 'Artikel beserta gambar cover berhasil dihapus secara permanen.'
-            ]);
+            echo json_encode(['status' => true, 'message' => 'Artikel beserta gambar cover berhasil dihapus secara permanen.']);
         } else {
-            echo json_encode([
-                'status' => false, 
-                'message' => 'Gagal menghapus baris data dari database.'
-            ]);
+            echo json_encode(['status' => false, 'message' => 'Gagal menghapus baris data dari database.']);
         }
     } else {
-        echo json_encode([
-            'status' => false, 
-            'message' => 'Data tidak ditemukan atau sudah dihapus sebelumnya.'
-        ]);
+        echo json_encode(['status' => false, 'message' => 'Data tidak ditemukan atau sudah dihapus sebelumnya.']);
     }
     exit;
 }
