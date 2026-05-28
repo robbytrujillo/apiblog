@@ -210,13 +210,13 @@ $result = $koneksi->query($query_str);
                             <span class="small text-muted"><i class="far fa-user mr-1"></i>By:
                                 <b><?= htmlspecialchars($row['pemosting']); ?></b></span>
                             <div>
-                                <button class="btn btn-info btn-sm shadow-sm"
+                                <button class="btn btn-info btn-sm shadow-sm rounded-pill"
                                     onclick="bukaModalDetail(<?= $row['id']; ?>)" title="Lihat Detail"><i
                                         class="fas fa-eye"></i></button>
-                                <button class="btn btn-warning btn-sm shadow-sm"
+                                <button class="btn btn-warning btn-sm shadow-sm rounded-pill"
                                     onclick="bukaModalEdit(<?= $row['id']; ?>)" title="Edit"><i
                                         class="fas fa-edit"></i></button>
-                                <button class="btn btn-danger btn-sm shadow-sm"
+                                <button class="btn btn-danger btn-sm shadow-sm rounded-pill"
                                     onclick="hapusArtikel(<?= $row['id']; ?>)" title="Hapus"><i
                                         class="fas fa-trash"></i></button>
                             </div>
@@ -295,7 +295,7 @@ $result = $koneksi->query($query_str);
                     </div>
                 </div>
                 <div class="modal-footer border-0 bg-light">
-                    <button type="button" class="btn btn-secondary px-4" style="border-radius: 8px;"
+                    <button type="button" class="btn btn-secondary px-4" style="border-radius: 30px;"
                         data-dismiss="modal">Tutup Bacaan</button>
                 </div>
             </div>
@@ -348,9 +348,9 @@ $result = $koneksi->query($query_str);
                         </div>
                     </div>
                     <div class="modal-footer border-0 bg-light">
-                        <button type="button" class="btn btn-secondary" style="border-radius: 8px;"
+                        <button type="button" class="btn btn-secondary" style="border-radius: 30px;"
                             data-dismiss="modal">Batal</button>
-                        <button type="submit" class="btn btn-primary" style="border-radius: 8px;" id="btnSimpan">Simpan
+                        <button type="submit" class="btn btn-primary" style="border-radius: 30px;" id="btnSimpan">Simpan
                             Data</button>
                     </div>
                 </form>
