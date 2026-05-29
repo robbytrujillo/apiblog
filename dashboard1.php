@@ -56,7 +56,8 @@ $result = $koneksi->query($query_str);
 
     <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet" />
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/tinymce/6.8.2/tinymce.min.js" referrerpolicy="origin"></script>
+
+
     <style>
     body {
         background-color: #f8f9fc;
@@ -135,13 +136,6 @@ $result = $koneksi->query($query_str);
         color: #4e73df;
         border-radius: 5px;
         margin: 0 2px;
-    }
-
-    /* Mengatasi pre formatting di modal agar kode tidak keluar kotak */
-    pre[class*="language-"] {
-        border-radius: 8px;
-        margin-top: 15px;
-        margin-bottom: 15px;
     }
     </style>
 </head>
@@ -302,7 +296,7 @@ $result = $koneksi->query($query_str);
                     <hr class="my-3">
 
                     <div id="detailIsi"
-                        style="line-height: 1.8; color: #4a5568; font-size: 1.05rem; text-align: justify; overflow-wrap: break-word;">
+                        style="line-height: 1.8; color: #4a5568; font-size: 1.05rem; white-space: pre-line; text-align: justify;">
                     </div>
                 </div>
                 <div class="modal-footer border-0 bg-light">
@@ -347,7 +341,7 @@ $result = $koneksi->query($query_str);
                         <div class="form-group">
                             <label class="font-weight-bold text-dark">Isi Artikel</label>
                             <textarea name="isi" id="isi" class="form-control" rows="5" style="border-radius: 8px;"
-                                placeholder="Tulis konten..."></textarea>
+                                required placeholder="Tulis konten..."></textarea>
                         </div>
                         <div class="form-group">
                             <label class="font-weight-bold text-dark">Gambar Cover</label>
@@ -372,28 +366,18 @@ $result = $koneksi->query($query_str);
     <script src="https://cdn.jsdelivr.net/npm/jquery@3.5.1/dist/jquery.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/js/bootstrap.bundle.min.js"></script>
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-php.min.js"></script>
-
     <script>
-    // INISIALISASI TINYMCE
-    tinymce.init({
-        selector: '#isi',
-        height: 350,
-        plugins: 'codesample link image lists',
-        toolbar: 'undo redo | styleselect | bold italic | alignleft aligncenter alignright | bullist numlist | codesample | link image',
-        codesample_global_prismjs: true,
-        branding: false
-    });
-
+    // FUNGSI BARU: Mengambil detail via AJAX & Menampilkan Modal Detail
     function bukaModalDetail(id) {
         $.ajax({
             url: 'proses-aksi.php?aksi=get_detail&id=' + id,
             type: 'GET',
             dataType: 'JSON',
             success: function(data) {
+                // Ambil teks nama kategori langsung dari element card DOM agar efisien
                 let namaKategori = $('#row-' + id).find('.badge').text();
 
+                // Format penanggalan JavaScript Indonesia
                 let dateObj = new Date(data.tanggal);
                 let opsiTanggal = {
                     day: 'numeric',
@@ -402,20 +386,15 @@ $result = $koneksi->query($query_str);
                 };
                 let tanggalFormat = dateObj.toLocaleDateString('id-ID', opsiTanggal);
 
+                // Suntik data ke elemen HTML di dalam Modal Detail
                 $('#detailGambar').attr('src', 'uploads/' + data.gambar);
                 $('#detailKategori').text(namaKategori ? namaKategori : 'Umum');
                 $('#detailTanggal').text(tanggalFormat);
                 $('#detailJudul').text(data.judul);
                 $('#detailPemosting').text(data.pemosting);
+                $('#detailIsi').text(data.isi); // Menggunakan .text() untuk keamanan XSS injection
 
-                // Gunakan .html() agar tag HTML dan kode tereksekusi
-                $('#detailIsi').html(data.isi);
-
-                // Render ulang warna kode syntax dengan Prism.js
-                setTimeout(function() {
-                    Prism.highlightAll();
-                }, 100);
-
+                // Munculkan Modal Detail
                 $('#modalDetailArtikel').modal('show');
             },
             error: function() {
@@ -430,12 +409,6 @@ $result = $koneksi->query($query_str);
         $('#modalTitle').text('Tambah Artikel Baru');
         $('#preview-container').addClass('d-none');
         $('#gambar').attr('required', true);
-
-        // Reset isi TinyMCE
-        if (tinymce.get('isi')) {
-            tinymce.get('isi').setContent('');
-        }
-
         $('#modalArtikel').modal('show');
     }
 
@@ -453,11 +426,6 @@ $result = $koneksi->query($query_str);
                 $('#id_kategori').val(data.id_kategori);
                 $('#isi').val(data.isi);
 
-                // Set data ke TinyMCE Editor
-                if (tinymce.get('isi')) {
-                    tinymce.get('isi').setContent(data.isi);
-                }
-
                 $('#preview-gambar').attr('src', 'uploads/' + data.gambar);
                 $('#preview-container').removeClass('d-none');
 
@@ -469,10 +437,6 @@ $result = $koneksi->query($query_str);
 
     $('#formArtikel').on('submit', function(e) {
         e.preventDefault();
-
-        // Pindahkan isi dari TinyMCE ke textarea asli sebelum dikirim
-        tinymce.triggerSave();
-
         let formData = new FormData(this);
         $.ajax({
             url: 'proses-aksi.php?aksi=simpan',
@@ -513,6 +477,22 @@ $result = $koneksi->query($query_str);
         }
     }
     </script>
+
+    <script>
+    tinymce.init({
+        selector: '#isi',
+        height: 350,
+        plugins: 'codesample link image lists',
+        toolbar: 'undo redo | styleselect | bold italic | alignleft aligncenter alignright | bullist numlist | codesample | link image',
+        codesample_global_prismjs: true, // Integrasi dengan Prism.js
+        branding: false
+    });
+    </script>
+
+    <script src="https://cdn.tiny.cloud/1/no-api-key/tinymce/6/tinymce.min.js" referrerpolicy="origin"></script>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-php.min.js"></script>
 </body>
 
 </html>
