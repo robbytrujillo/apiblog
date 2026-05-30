@@ -150,7 +150,7 @@ $result = $koneksi->query($query_str);
 
     <nav class="navbar navbar-expand navbar-dark shadow mb-4">
         <div class="container">
-            <a class="navbar-brand font-weight-bold" href="#">My Blog</a>
+            <a class="navbar-brand font-weight-bold" href="#">Blog Manager</a>
             <ul class="navbar-nav ml-auto align-items-center">
                 <li class="nav-item active mr-3 text-white d-none d-sm-block">
                     <i class="fas fa-user-circle mr-1"></i> Hai, <?= htmlspecialchars($_SESSION['nama_lengkap']); ?>
@@ -274,13 +274,6 @@ $result = $koneksi->query($query_str);
         </div>
         <?php endif; ?>
     </div>
-
-    <footer class="bg-white text-center py-3 border-top shadow-sm mt-5">
-        <div class="container text-muted small">
-            <span>&copy; <?= date('Y'); ?> <strong style="color: #4e73df;">My Blog</strong> by <a
-                    href="https://robbyilham.com/" target="_blank" style="text-decoration: none">Robby Ilham</a></span>
-        </div>
-    </footer>
 
     <div class="modal fade" id="modalDetailArtikel" tabindex="-1" role="dialog" aria-hidden="true">
         <div class="modal-dialog modal-lg modal-dialog-scrollable" role="document">
